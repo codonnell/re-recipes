@@ -16,7 +16,7 @@
     (chsk-send! uid data)))
 
 (defn event-msg-handler [ev-msg]
-  (println ev-msg))
+  nil)
 
 (defonce router (atom nil))
 

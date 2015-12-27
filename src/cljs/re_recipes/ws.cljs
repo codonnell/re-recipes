@@ -19,7 +19,7 @@
   )
 
 (defn event-msg-handler [ev-msg]
-  (println ev-msg))
+  nil)
 
 (def router (atom nil))
 (defn stop-router! [] (when-let [stop-fn @router] (stop-fn)))
