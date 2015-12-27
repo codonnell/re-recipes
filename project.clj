@@ -3,6 +3,8 @@
                  [org.clojure/clojurescript "1.7.170"]
                  [org.clojure/core.async "0.2.374"]
 
+                 [com.datomic/datomic-pro "0.9.5327" :exclusions [joda-time]]
+
                  [com.taoensso/sente "1.7.0"]
                  [com.taoensso/timbre "4.1.4"]
 
