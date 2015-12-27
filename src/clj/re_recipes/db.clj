@@ -31,8 +31,39 @@
          :default v
          )])))
 
-(defn add-ingredient-tx [m]
+(def full-recipe-pull
+  [:recipe/name :recipe/url {:recipe/ingredients [:ingredient/name]}
+   {:recipe/his-rating [:rating/review :rating/stars]}
+   {:recipe/her-rating [:rating/review :rating/stars]}])
+
+(defn recipe-by-name [db name]
+  (ffirst (q '[:find (pull ?r pattern)
+               :in $ ?name pattern
+               :where [?r :recipe/name ?name]]
+            db name full-recipe-pull)))
+
+(defn recipes-by-ingredient [db ingredient-name]
+  (q '[:find [(pull ?r pattern) ...]
+       :in $ ?i-name pattern
+       :where
+       [?r :recipe/ingredients ?i]
+       [?i :ingredient/name ?i-name]]
+    db ingredient-name full-recipe-pull))
+
+(defn add-entity-tx [m]
   [(merge m {:db/id (d/tempid :db.part/user)})])
+
+(defn add-recipe-tx [m]
+  (let [ingredient-txs (apply concat (map add-entity-tx (:recipe/ingredients m)))
+        ingredient-tempids (mapv :db/id ingredient-txs)
+        his-rating (add-entity-tx (:recipe/his-rating m))
+        her-rating (add-entity-tx (:recipe/her-rating m))]
+    (concat ingredient-txs his-rating her-rating
+      (add-entity-tx
+        (assoc m
+          :recipe/ingredients ingredient-tempids
+          :recipe/his-rating (:db/id (first his-rating))
+          :recipe/her-rating (:db/id (first her-rating)))))))
 
 (defn ingredient-by-name [db name]
   (let [results (q '[:find (pull ?i [:ingredient/name])
@@ -40,6 +71,24 @@
                      :where [?i :ingredient/name ?name]]
                   db name)]
     (ffirst results)))
+
+(def search-rules
+  '[[(search-matches? ?s ?r) [(fulltext $ :recipe/name ?s) [[?r _ _ _]]]]
+    [(search-matches? ?s ?r)
+     [(fulltext $ :ingredient/name ?s) [[?ingredient _ _ _]]]
+     [?r :recipe/ingredients ?ingredient]]])
+
+(defn recipe-search [db search-term]
+  (q '[:find [(pull ?r pattern) ...]
+       :in $ % ?search-term pattern
+       :where (search-matches? ?search-term ?r)]
+    db search-rules search-term full-recipe-pull))
+
+(defn all-recipes [db]
+  (q '[:find [(pull ?r pattern) ...]
+       :in $ pattern
+       :where [?r :recipe/name _]]
+    db full-recipe-pull))
 
 (def test-data
   [{:db/id #db/id[:db.part/user -100001]
