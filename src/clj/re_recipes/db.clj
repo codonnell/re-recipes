@@ -31,8 +31,15 @@
          :default v
          )])))
 
-(defn get-recipe [attrs]
-  nil)
+(defn add-ingredient-tx [m]
+  [(merge m {:db/id (d/tempid :db.part/user)})])
+
+(defn ingredient-by-name [db name]
+  (let [results (q '[:find (pull ?i [:ingredient/name])
+                     :in $ ?name
+                     :where [?i :ingredient/name ?name]]
+                  db name)]
+    (ffirst results)))
 
 (def test-data
   [{:db/id #db/id[:db.part/user -100001]
