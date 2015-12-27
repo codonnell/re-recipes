@@ -12,17 +12,22 @@
                  [compojure "1.4.0"]
                  [environ "1.0.1"]
 
+                 [com.stuartsierra/component "0.3.1"]
+
                  [hiccup "1.0.5"]
                  [reagent "0.5.1"]
                  [re-frame "0.6.0"]
                  [secretary "1.2.3"]
                  [prismatic/schema "1.0.4"]]
 
-  :main re-recipes.server
+  ;; :main re-recipes.server
 
   :min-lein-version "2.5.3"
 
   :source-paths ["src/clj" "src/cljc"]
+
+  :profiles {:dev {:source-paths ["dev"]
+                   :dependencies [[reloaded.repl "0.2.1"]]}}
 
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-2"]
