@@ -21,14 +21,13 @@
    })
 
 (defn connect-apply-schema-create-dbs [f]
-  (d/create-database test-uri)
-  (let [conn (d/connect test-uri)]
-    @(d/transact conn db/schema)
+  (let [db (component/start (db/new-db test-uri))
+        conn (:db db)]
     (def empty-db (d/db conn))
     (def test-db (speculate empty-db db/test-data))
-    (def two-recipes-db (speculate test-db (db/add-recipe-tx test-recipe))))
-  (f)
-  (d/delete-database test-uri))
+    (def two-recipes-db (speculate test-db (db/add-recipe-tx test-recipe)))
+    (f)
+    (component/stop db)))
 
 (use-fixtures :once connect-apply-schema-create-dbs)
 
