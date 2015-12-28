@@ -17,32 +17,27 @@
 (defn new-db [uri]
   (map->Database {:uri uri}))
 
-(defn namespace-recipe-map [recipe]
-  "Takes a map like {:name \"Chris\" :ingredients [\"coriander\"]} and adds the proper namespaces. In this example, the map {:recipe/name \"Chris\" :recipe/ingredients [{:recipe/name \"coriander\"}]} would be returned."
-  (into {}
-    (for [[k v] recipe]
-      [(->> (str k)
-         (str ":recipe/")
-         (keyword))
-       (condp = k
-         :ingredients (for [i v] {:ingredient/name i})
-         :his-rating {:rating/stars (:stars v) :rating/review (:review v)}
-         :her-rating {:rating/stars (:stars v) :rating/review (:review v)}
-         :default v
-         )])))
+(defmacro database-fn
+  "Defines two functions fname and fname*. The fname function takes as its first argument a database component of stuartsierra's system. The function fname* takes a datomic db value. They are otherwise identical."
+  [fname [db & args] & fbody]
+  `(do
+     (defn ~(-> fname (str "*") (symbol)) [~db ~@args]
+       ~@fbody)
+     (defn fname [~db ~@args]
+       (~(-> fname (str "*") (symbol)) (d/db (get :db ~db)) ~@args))))
 
 (def full-recipe-pull
   [:recipe/name :recipe/url {:recipe/ingredients [:ingredient/name]}
    {:recipe/his-rating [:rating/review :rating/stars]}
    {:recipe/her-rating [:rating/review :rating/stars]}])
 
-(defn recipe-by-name [db name]
-  (ffirst (q '[:find (pull ?r pattern)
-               :in $ ?name pattern
-               :where [?r :recipe/name ?name]]
+(database-fn recipe-by-name [db name]
+  (ffirst (d/q '[:find (pull ?r pattern)
+                 :in $ ?name pattern
+                 :where [?r :recipe/name ?name]]
             db name full-recipe-pull)))
 
-(defn recipes-by-ingredient [db ingredient-name]
+(database-fn recipes-by-ingredient [db ingredient-name]
   (q '[:find [(pull ?r pattern) ...]
        :in $ ?i-name pattern
        :where
@@ -65,7 +60,7 @@
           :recipe/his-rating (:db/id (first his-rating))
           :recipe/her-rating (:db/id (first her-rating)))))))
 
-(defn ingredient-by-name [db name]
+(database-fn ingredient-by-name [db name]
   (let [results (q '[:find (pull ?i [:ingredient/name])
                      :in $ ?name
                      :where [?i :ingredient/name ?name]]
@@ -78,13 +73,13 @@
      [(fulltext $ :ingredient/name ?s) [[?ingredient _ _ _]]]
      [?r :recipe/ingredients ?ingredient]]])
 
-(defn recipe-search [db search-term]
+(database-fn recipe-search [db search-term]
   (q '[:find [(pull ?r pattern) ...]
        :in $ % ?search-term pattern
        :where (search-matches? ?search-term ?r)]
     db search-rules search-term full-recipe-pull))
 
-(defn all-recipes [db]
+(database-fn all-recipes [db]
   (q '[:find [(pull ?r pattern) ...]
        :in $ pattern
        :where [?r :recipe/name _]]
