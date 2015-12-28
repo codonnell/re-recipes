@@ -8,7 +8,7 @@
   (start [component]
     (d/create-database uri)
     (let [conn (d/connect uri)]
-      @(d/transact conn schema)
+      @(d/transact conn (read-string (slurp "schema.edn")))
       (assoc component :db conn)))
 
   (stop [component]
@@ -24,8 +24,8 @@
   `(do
      (defn ~(-> fname (str "*") (symbol)) [~db ~@args]
        ~@fbody)
-     (defn fname [~db ~@args]
-       (~(-> fname (str "*") (symbol)) (d/db (get :db ~db)) ~@args))))
+     (defn ~fname [~db ~@args]
+       (~(-> fname (str "*") (symbol)) (d/db (get ~db :db)) ~@args))))
 
 (def full-recipe-pull
   [:recipe/name :recipe/url {:recipe/ingredients [:ingredient/name]}
@@ -103,57 +103,3 @@
     :recipe/ingredients [#db/id[:db.part/user -100003] #db/id[:db.part/user -100004]]
     :recipe/his-rating #db/id[:db.part/user -100001]
     :recipe/her-rating #db/id[:db.part/user -100002]}])
-
-(def schema
-  [{:db/id #db/id[:db.part/db]
-    :db/ident :recipe/name
-    :db/valueType :db.type/string
-    :db/cardinality :db.cardinality/one
-    :db/fulltext true
-    :db/doc "A recipe's name"
-    :db.install/_attribute :db.part/db}
-   {:db/id #db/id[:db.part/db]
-    :db/ident :recipe/url
-    :db/valueType :db.type/string
-    :db/cardinality :db.cardinality/one
-    :db/doc "A recipe's url"
-    :db.install/_attribute :db.part/db}
-   {:db/id #db/id[:db.part/db]
-    :db/ident :recipe/his-rating
-    :db/valueType :db.type/ref
-    :db/cardinality :db.cardinality/one
-    :db/doc "His rating for a recipe"
-    :db.install/_attribute :db.part/db}
-   {:db/id #db/id[:db.part/db]
-    :db/ident :recipe/her-rating
-    :db/valueType :db.type/ref
-    :db/cardinality :db.cardinality/one
-    :db/doc "Her rating for a recipe"
-    :db.install/_attribute :db.part/db}
-   {:db/id #db/id[:db.part/db]
-    :db/ident :recipe/ingredients
-    :db/valueType :db.type/ref
-    :db/cardinality :db.cardinality/many
-    :db/doc "Ingredients in a recipe"
-    :db.install/_attribute :db.part/db}
-   {:db/id #db/id[:db.part/db]
-    :db/ident :ingredient/name
-    :db/valueType :db.type/string
-    :db/cardinality :db.cardinality/one
-    :db/unique :db.unique/identity
-    :db/fulltext true
-    :db/doc "Ingredient's name"
-    :db.install/_attribute :db.part/db}
-   {:db/id #db/id[:db.part/db]
-    :db/ident :rating/stars
-    :db/valueType :db.type/long
-    :db/cardinality :db.cardinality/one
-    :db/doc "Number of stars in a rating"
-    :db.install/_attribute :db.part/db}
-   {:db/id #db/id[:db.part/db]
-    :db/ident :rating/review
-    :db/valueType :db.type/string
-    :db/cardinality :db.cardinality/one
-    :db/doc "Review in a rating"
-    :db.install/_attribute :db.part/db}
-   ])
