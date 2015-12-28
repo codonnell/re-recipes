@@ -18,6 +18,34 @@
 (defn new-db [uri]
   (map->Database {:uri uri}))
 
+(defn denamespace-recipe
+  "Takes a map like {:recipe/name \"Chris\" :recipe/ingredients [{:ingredient/name \"coriander\"}]} and removes namespaces. In this example, the map {:name \"Chris\" :ingredients [\"coriander\"]} would be returned."
+  [recipe]
+  (into {}
+    (let [de-ns (comp keyword name)
+          de-ns-map (fn [m] (into {} (mapv (fn [[k v]] [(de-ns k) v]) m)))]
+      (for [[k v] recipe]
+        [(de-ns k) ; Removes namspace from key
+         (condp = k
+           :recipe/ingredients (mapv :ingredient/name v)
+           :recipe/his-rating (de-ns-map v)
+           :recipe/her-rating (de-ns-map v)
+           v
+           )]))))
+
+(defn namespace-recipe
+  "Takes a map like {:name \"Chris\" :ingredients [\"coriander\"]} and adds the proper namespaces. In this example, the map {:recipe/name \"Chris\" :recipe/ingredients [{:recipe/name \"coriander\"}]} would be returned."
+  [recipe]
+  (into {}
+    (for [[k v] recipe]
+      [(->> (str k) (rest) (apply str "recipe/") (keyword))
+       (condp = k
+         :ingredients (mapv (fn [i] {:ingredient/name i}) v)
+         :his-rating {:rating/stars (:stars v) :rating/review (:review v)}
+         :her-rating {:rating/stars (:stars v) :rating/review (:review v)}
+         v
+         )])))
+
 (defmacro database-fn
   "Defines two functions fname and fname*. The fname function takes as its first argument a database component of stuartsierra's system. The function fname* takes a datomic db value. They are otherwise identical."
   [fname [db & args] & fbody]

@@ -1,6 +1,7 @@
 (ns re-recipes.db-test
   (:require [re-recipes.db :as db]
             [datomic.api :as d :refer [q]]
+            [com.stuartsierra.component :as component]
             [clojure.test :as t :refer [deftest use-fixtures is]]))
 
 (def test-uri "datomic:mem://re-recipes-test")
@@ -64,3 +65,17 @@
   (let [db-with-recipe (speculate empty-db (db/add-recipe-tx test-recipe))]
     (is (= test-recipe (db/recipe-by-name* db-with-recipe "latkes")))
     (is (= test-recipe (first (db/recipes-by-ingredient* db-with-recipe "oil"))))))
+
+(def densed-test-recipe
+  {:name "latkes"
+   :url "http://www.latkes.com"
+   :his-rating
+   {:stars 4 :review "Tasty"}
+   :her-rating
+   {:stars 5 :review "Delicious"}
+   :ingredients ["potato" "oil" "ginger"]})
+
+(deftest namespace-recipe
+  (is (= test-recipe (db/namespace-recipe (db/denamespace-recipe test-recipe))))
+  (is (= densed-test-recipe (db/denamespace-recipe test-recipe)))
+  (is (= test-recipe (db/namespace-recipe densed-test-recipe))))
