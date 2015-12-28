@@ -8,6 +8,7 @@
   (start [component]
     (d/create-database uri)
     (let [conn (d/connect uri)]
+      @(d/transact conn schema)
       (assoc component :db conn)))
 
   (stop [component]
