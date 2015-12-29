@@ -9,8 +9,7 @@
 
 (defroutes routes
   (GET "/chsk" req (ws/ring-ajax-get-or-ws-handshake req))
-  (POST "/chsk" req (ws/ring-ajax-post req))
-  (resources "/"))
+  (POST "/chsk" req (ws/ring-ajax-post req)))
 
 (def app
   (let [handler (wrap-defaults #'routes site-defaults)]
