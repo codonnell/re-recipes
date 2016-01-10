@@ -15,14 +15,13 @@
                  [environ "1.0.1"]
 
                  [com.stuartsierra/component "0.3.1"]
+                 [valichek/component-compojure "0.2-SNAPSHOT"]
 
                  [hiccup "1.0.5"]
                  [reagent "0.5.1"]
                  [re-frame "0.6.0"]
                  [secretary "1.2.3"]
                  [prismatic/schema "1.0.4"]]
-
-  ;; :main re-recipes.server
 
   :min-lein-version "2.5.3"
 

@@ -1,20 +1,16 @@
 (ns re-recipes.server
-  (:require [re-recipes.handler :refer [app]]
+  (:require [re-recipes.handler :refer [get-routes]]
             [environ.core :refer [env]]
             [org.httpkit.server :refer [run-server]]
             [com.stuartsierra.component :as component])
   (:gen-class))
 
-(defn -main [& args]
-  (let [port (Integer/parseInt (or (env :port) "3000"))]
-    (run-server app {:port port :join? false})))
-
-(defrecord Server [port handler]
+(defrecord Server [port db ws routes]
   component/Lifecycle
 
   (start [component]
     (println "Starting server")
-    (let [server (run-server handler {:port port :join? false})]
+    (let [server (run-server (get-routes (:routes routes)) {:port port :join? false})]
       (assoc component :server server)))
 
   (stop [component]
@@ -23,5 +19,5 @@
       (stop-fn))
     (assoc component :server nil)))
 
-(defn new-server [port handler]
-  (map->Server {:port port :handler handler}))
+(defn new-server [port]
+  (map->Server {:port port}))
