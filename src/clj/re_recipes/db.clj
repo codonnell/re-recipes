@@ -50,10 +50,10 @@
   "Defines two functions fname and fname*. The fname function takes as its first argument a database component of stuartsierra's system. The function fname* takes a datomic db value. They are otherwise identical."
   [fname [db & args] & fbody]
   `(do
-     (defn ~(-> fname (str "*") (symbol)) [~db ~@args]
+     (defn ~(symbol (str fname "*")) [~db ~@args]
        ~@fbody)
      (defn ~fname [~db ~@args]
-       (~(-> fname (str "*") (symbol)) (d/db (get ~db :db)) ~@args))))
+       (~(symbol (str fname "*")) (d/db (get ~db :db)) ~@args))))
 
 (def full-recipe-pull
   [:recipe/name :recipe/url {:recipe/ingredients [:ingredient/name]}

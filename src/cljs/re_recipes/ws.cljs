@@ -26,3 +26,17 @@
 (defn start-router! []
   (stop-router!)
   (reset! router (sente/start-chsk-router! ch-chsk event-msg-handler)))
+
+(defn all-recipes []
+  (chsk-send! [:recipe/all nil]
+              8000
+              (fn [reply]
+                (if (sente/cb-success? reply)
+                  (println reply)
+                  (println "Error in all-recipes request")))))
+
+;; (defn all-recipes []
+;;   (chsk-send! [:recipe/all nil]
+;;     8000 ;Timeout
+;;     (fn [{:keys [recipes]}]
+;;       (re-frame/dispatch [:add-all-recipes recipes]))))

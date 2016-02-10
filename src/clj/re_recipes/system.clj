@@ -9,7 +9,9 @@
   (let [{:keys [port]} config-options]
     (component/system-map
       :db (db/new-db "datomic:mem://re-recipes")
-      :ws (ws/new-ws)
+      :ws (component/using
+           (ws/new-ws)
+           [:db])
       :routes (component/using
                 (handler/new-routes)
                 [:db :ws])

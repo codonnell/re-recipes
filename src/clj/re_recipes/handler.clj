@@ -7,9 +7,9 @@
 
 (defroutes ServerRoutes [db ws]
   (GET "/chsk" req (do ;(pprint req)
-                       ((get-in req [:system-deps :ws :ajax-get-or-ws-handshake-fn]) req)))
+                       ((get-in req [:system-deps :ws :ring-ajax-get-or-ws-handshake]) req)))
   (POST "/chsk" req (do ;(pprint req)
-                        ((get-in req [:system-deps :ws :ajax-post-fn]) req))))
+                        ((get-in req [:system-deps :ws :ring-ajax-post]) req))))
 
 (defn new-routes [] (map->ServerRoutes {}))
 

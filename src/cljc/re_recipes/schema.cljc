@@ -20,4 +20,5 @@
 (def Database
   "A schema for the re-frame database"
   {:recipes {s/Uuid Recipe}
-   (s/optional-key :active-panel) s/Keyword})
+   (s/optional-key :active-panel) s/Keyword
+   :loading s/Bool})
