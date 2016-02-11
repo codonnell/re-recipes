@@ -7,24 +7,21 @@
             [re-recipes.db :as db]
             [clojure.pprint :refer [pprint]]))
 
-;; (defmulti event-msg-handler (fn [_ ev-msg] (:id ev-msg)))
+(defmulti event-msg-handler (fn [_ ev-msg] (:id ev-msg)))
 
-;; (defmethod event-msg-handler :recipe/all
-;;   [db {:as ev-msg :keys [event ?reply-fn]}]
-;;   (println ev-msg)
-;;   (?reply-fn {:text "hello"}))
+(defmethod event-msg-handler :recipe/all
+  [db {:as ev-msg :keys [event ?reply-fn]}]
+  (let [recipes (mapv db/denamespace-recipe (db/all-recipes db))]
+       (debug "recipe/all:" recipes)
+       (?reply-fn {:recipes recipes})))
 
-;; (defmethod event-msg-handler :default
-;;   [db {:as ev-msg :keys [event]}]
-;;   (println "Unhandled event:" event))
+(defmethod event-msg-handler :default
+  [db {:as ev-msg :keys [event]}]
+  ;; (debug "Unhandled event:" event)
+  )
 
-;; (defn event-msg-handler* [db ev-msg]
-;;   (event-msg-handler db ev-msg))
-
-(defn event-msg-handler* [{:keys [?reply-fn event] :as ev-msg}]
-  (debug "Received message: " (str event))
-  (when ?reply-fn
-    (?reply-fn {:text "hello"})))
+(defn event-msg-handler* [db ev-msg]
+  (event-msg-handler db ev-msg))
 
 (defrecord WebSocket [db
                       ring-ajax-post
@@ -38,7 +35,7 @@
     (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn connected-uids] :as socket}
           (sente/make-channel-socket! sente-web-server-adapter {})
 
-          stop-fn (sente/start-chsk-router! ch-recv event-msg-handler*)]
+          stop-fn (sente/start-chsk-router! ch-recv (partial event-msg-handler* db))]
       (assoc component
              :ring-ajax-post ajax-post-fn
              :ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn

@@ -8,6 +8,7 @@
    (reaction (:name @db))))
 
 (defn active-recipes [db _]
+  (println db)
   (if-let [ids (:active-recipes db)]
     ids
     (keys (:recipes db))))

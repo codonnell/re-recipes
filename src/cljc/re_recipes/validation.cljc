@@ -23,7 +23,7 @@
          (valid-recipe-name? (:name recipe))
          (not (empty? (:ingredients recipe)))
          (every? identity (map valid-ingredient? (:ingredients recipe)))
-         (valid-url? (:url recipe))
+         ;; (valid-url? (:url recipe))
          (valid-stars? (get-in recipe [:his-rating :stars]))
          (valid-stars? (get-in recipe [:her-rating :stars])))
        (catch #?(:cljs :default :clj Exception) e

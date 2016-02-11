@@ -29,14 +29,10 @@
 
 (defn all-recipes []
   (chsk-send! [:recipe/all nil]
-              8000
-              (fn [reply]
-                (if (sente/cb-success? reply)
-                  (println reply)
-                  (println "Error in all-recipes request")))))
-
-;; (defn all-recipes []
-;;   (chsk-send! [:recipe/all nil]
-;;     8000 ;Timeout
-;;     (fn [{:keys [recipes]}]
-;;       (re-frame/dispatch [:add-all-recipes recipes]))))
+    8000 ;Timeout
+    (fn [{:keys [recipes] :as edn-reply}]
+      (if (sente/cb-success? edn-reply)
+        (do
+          (println "Adding recipes:" (str recipes))
+          (re-frame/dispatch [:add-all-recipes recipes]))
+        (println "Unsuccessful request: " (str edn-reply))))))
