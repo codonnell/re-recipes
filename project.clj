@@ -28,7 +28,10 @@
   :source-paths ["src/clj" "src/cljc" "test/clj"]
 
   :profiles {:dev {:source-paths ["dev"]
-                   :dependencies [[reloaded.repl "0.2.1"]]}}
+                   :dependencies [[reloaded.repl "0.2.1"]
+                                  [com.cemerick/piggieback "0.2.1"]
+                                  [figwheel-sidecar "0.5.0-2"]]
+                   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}}
 
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-2"]
