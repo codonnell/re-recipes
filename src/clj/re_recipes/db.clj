@@ -9,11 +9,11 @@
     (d/create-database uri)
     (let [conn (d/connect uri)]
       @(d/transact conn (read-string (slurp "schema.edn")))
-      (assoc component :db conn)))
+      (assoc component :conn conn)))
 
   (stop [component]
-    (d/release (:db component))
-    (assoc component :db nil)))
+    (d/release (:conn component))
+    (assoc component :conn nil)))
 
 (defn new-db [uri]
   (map->Database {:uri uri}))
@@ -34,11 +34,12 @@
            )]))))
 
 (defn namespace-recipe
-  "Takes a map like {:name \"Chris\" :ingredients [\"coriander\"]} and adds the proper namespaces. In this example, the map {:recipe/name \"Chris\" :recipe/ingredients [{:recipe/name \"coriander\"}]} would be returned."
+  "Takes a map like {:name \"Chris\" :ingredients [\"coriander\"]} and adds the proper namespaces. In this example, the map {:recipe/name \"Chris\" :recipe/ingredients [{:recipe/name \"coriander\"}]} would be returned. Note that :d is turned into :db/id."
   [recipe]
   (into {}
     (for [[k v] recipe]
-      [(->> (str k) (rest) (apply str "recipe/") (keyword))
+      [(if (= k :id) :db/id
+           (->> (str k) (rest) (apply str "recipe/") (keyword)))
        (condp = k
          :ingredients (mapv (fn [i] {:ingredient/name i}) v)
          :his-rating {:rating/stars (:stars v) :rating/review (:review v)}
@@ -53,10 +54,10 @@
      (defn ~(symbol (str fname "*")) [~db ~@args]
        ~@fbody)
      (defn ~fname [~db ~@args]
-       (~(symbol (str fname "*")) (d/db (get ~db :db)) ~@args))))
+       (~(symbol (str fname "*")) (d/db (get ~db :conn)) ~@args))))
 
 (def full-recipe-pull
-  [:recipe/name :recipe/url {:recipe/ingredients [:ingredient/name]}
+  [:db/id :recipe/name :recipe/url {:recipe/ingredients [:ingredient/name]}
    {:recipe/his-rating [:rating/review :rating/stars]}
    {:recipe/her-rating [:rating/review :rating/stars]}])
 
@@ -113,21 +114,3 @@
        :in $ pattern
        :where [?r :recipe/name _]]
     db full-recipe-pull))
-
-(def test-data
-  [{:db/id #db/id[:db.part/user -100001]
-    :rating/stars 5
-    :rating/review "Pretty good!"}
-   {:db/id #db/id[:db.part/user -100002]
-    :rating/stars 4
-    :rating/review "Too much ginger"}
-   {:db/id #db/id[:db.part/user -100003]
-    :ingredient/name "ginger"}
-   {:db/id #db/id[:db.part/user -100004]
-    :ingredient/name "bread"}
-   {:db/id #db/id[:db.part/user -100005]
-    :recipe/name "Ginger bread"
-    :recipe/url "https://www.blueapron.com/recipes/ginger-bread"
-    :recipe/ingredients [#db/id[:db.part/user -100003] #db/id[:db.part/user -100004]]
-    :recipe/his-rating #db/id[:db.part/user -100001]
-    :recipe/her-rating #db/id[:db.part/user -100002]}])

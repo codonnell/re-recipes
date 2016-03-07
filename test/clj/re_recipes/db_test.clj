@@ -10,6 +10,24 @@
   (:db-after
    (d/with db t)))
 
+(def test-data
+  [{:db/id #db/id[:db.part/user -100001]
+    :rating/stars 5
+    :rating/review "Pretty good!"}
+   {:db/id #db/id[:db.part/user -100002]
+    :rating/stars 4
+    :rating/review "Too much ginger"}
+   {:db/id #db/id[:db.part/user -100003]
+    :ingredient/name "ginger"}
+   {:db/id #db/id[:db.part/user -100004]
+    :ingredient/name "bread"}
+   {:db/id #db/id[:db.part/user -100005]
+    :recipe/name "Ginger bread"
+    :recipe/url "https://www.blueapron.com/recipes/ginger-bread"
+    :recipe/ingredients [#db/id[:db.part/user -100003] #db/id[:db.part/user -100004]]
+    :recipe/his-rating #db/id[:db.part/user -100001]
+    :recipe/her-rating #db/id[:db.part/user -100002]}])
+
 (def test-recipe
   {:recipe/name "latkes"
    :recipe/url "http://www.latkes.com"
@@ -23,9 +41,9 @@
 
 (defn connect-apply-schema-create-dbs [f]
   (let [db (component/start (db/new-db test-uri))
-        conn (:db db)]
+        conn (:conn db)]
     (def empty-db (d/db conn))
-    (def test-db (speculate empty-db db/test-data))
+    (def test-db (speculate empty-db test-data))
     (def two-recipes-db (speculate test-db (db/add-recipe-tx test-recipe)))
     (f)
     (component/stop db)))
@@ -63,8 +81,8 @@
 
 (deftest add-recipe-succeeds
   (let [db-with-recipe (speculate empty-db (db/add-recipe-tx test-recipe))]
-    (is (= test-recipe (db/recipe-by-name* db-with-recipe "latkes")))
-    (is (= test-recipe (first (db/recipes-by-ingredient* db-with-recipe "oil"))))))
+    (is (= test-recipe (dissoc (db/recipe-by-name* db-with-recipe "latkes") :db/id)))
+    (is (= test-recipe (dissoc (first (db/recipes-by-ingredient* db-with-recipe "oil")) :db/id)))))
 
 (def densed-test-recipe
   {:name "latkes"
@@ -76,6 +94,8 @@
    :ingredients ["potato" "oil" "ginger"]})
 
 (deftest namespace-recipe
-  (is (= test-recipe (db/namespace-recipe (db/denamespace-recipe test-recipe))))
-  (is (= densed-test-recipe (db/denamespace-recipe test-recipe)))
-  (is (= test-recipe (db/namespace-recipe densed-test-recipe))))
+  (let [test-recipe-id (assoc test-recipe :db/id 1)
+        densed-test-recipe-id (assoc densed-test-recipe :id 1)]
+    (is (= test-recipe-id (db/namespace-recipe (db/denamespace-recipe test-recipe-id))))
+    (is (= densed-test-recipe-id (db/denamespace-recipe test-recipe-id)))
+    (is (= test-recipe-id (db/namespace-recipe densed-test-recipe-id)))))
